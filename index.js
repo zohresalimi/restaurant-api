@@ -1,20 +1,66 @@
 const express = require('express');
-const app = express();
+const jwt = require('jsonwebtoken');
 
+const app = express();
 const port = 5000;
+const accessTokenSecret = 'sceatsRestaurantsapiv1';
+
 
 app.use(express.json())
 
+// define variables
 const data = {
     restaurants: []
 }
+
+const users = [
+    {
+        username: 'john',
+        password: 'password123admin',
+        role: 'admin'
+    }, {
+        username: 'anna',
+        password: 'password123member',
+        role: 'member'
+    }
+];
+
+
+// authenticat a user
+const userAuthenticate = (req, res, next) => {
+    const authHeader = req.headers.authorization
+    console.log(authHeader)
+    if(!authHeader){
+        handleUnAuthorized(res)
+        return
+    }
+    const token = authHeader.split(' ')[1];
+    console.log(token)
+    jwt.verify(token, accessTokenSecret, (err, user) => {
+        if(err){
+            handleUnAuthorized(res)
+            return
+        }
+        console.log(user)
+        req.user = user;
+        console.log(req)
+        next()
+    })
+}
+
+// handel unauthorized user 
+const handleUnAuthorized = (res) =>{
+    return res.status(401).json({ status : false, message: "token is expired"});
+}
+
 
 // get, delete, post, put
 app.get('/', (req, res) => {
     res.json({messagev: "Hello"})
 })
 
-app.get('/api/v1/restaurants', (req, res) => res.json(data))
+// get all restaurants
+app.get('/api/v1/restaurants',userAuthenticate, (req, res) => res.json(data))
 
 // add a new restaurant
 app.post('/api/v1/restaurants', (req, res) =>{
@@ -77,5 +123,36 @@ app.put('/api/v1/restaurants/:id', (req, res) => {
 
 
 })
+
+
+/* ___________ user authentication ___________ */
+
+// generate JWT token
+function generateAccessToken(username){
+    return jwt.sign(username,accessTokenSecret)
+}
+
+// get all users
+app.get('/users', (req, res) => res.json(users))
+
+// signup method
+app.post('/signup', (req, res) => {
+    const {username, password} = req.body;
+    users.push({username, password, role: 'user'});
+    res.status(201).json({message: 'user is created'});
+})
+
+// login method
+app.post('/login', (req, res) => {
+    const {username, password} = req.body;
+    const user = users.find( user => user.username === username && user.password === password);
+    if(user){
+        const accessToken = generateAccessToken(username)
+        res.json({accessToken})
+    }else{
+        res.status(401).json({message: 'Invalid username or password'});
+    }
+})
+
 
 app.listen(port, ()=> console.log('server is running .....'))
