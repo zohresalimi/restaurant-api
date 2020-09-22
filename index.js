@@ -1,12 +1,39 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { connect } = require('./config/detabase')
 
 const app = express();
-const port = 5000;
+const port = 5001;
 const accessTokenSecret = 'sceatsRestaurantsapiv1';
 
+// authenticat a user
+const userAuthenticate = (req, res, next) => {
+    const publicRoutes = [
+        '/login',
+        '/signup'
+    ]
+    if(req.url === '/' || publicRoutes.some(route => req.url.includes(route))){
+        next()
+    }
+    const authHeader = req.headers.authorization
+    if(!authHeader){
+        handleUnAuthorized(res)
+        return
+    }
+    const token = authHeader.split(' ')[1];
+    console.log(token)
+    jwt.verify(token, accessTokenSecret, (err, user) => {
+        if(err){
+            handleUnAuthorized(res)
+            return
+        }
+        req.user = user;
+        next()
+    })
+}
 
 app.use(express.json())
+app.use(userAuthenticate)
 
 // define variables
 const data = {
@@ -25,29 +52,6 @@ const users = [
     }
 ];
 
-
-// authenticat a user
-const userAuthenticate = (req, res, next) => {
-    const authHeader = req.headers.authorization
-    console.log(authHeader)
-    if(!authHeader){
-        handleUnAuthorized(res)
-        return
-    }
-    const token = authHeader.split(' ')[1];
-    console.log(token)
-    jwt.verify(token, accessTokenSecret, (err, user) => {
-        if(err){
-            handleUnAuthorized(res)
-            return
-        }
-        console.log(user)
-        req.user = user;
-        console.log(req)
-        next()
-    })
-}
-
 // handel unauthorized user 
 const handleUnAuthorized = (res) =>{
     return res.status(401).json({ status : false, message: "token is expired"});
@@ -60,7 +64,7 @@ app.get('/', (req, res) => {
 })
 
 // get all restaurants
-app.get('/api/v1/restaurants',userAuthenticate, (req, res) => res.json(data))
+app.get('/api/v1/restaurants', userAuthenticate, (req, res) => res.json(data))
 
 // add a new restaurant
 app.post('/api/v1/restaurants', (req, res) =>{
@@ -155,4 +159,5 @@ app.post('/login', (req, res) => {
 })
 
 
+connect();
 app.listen(port, ()=> console.log('server is running .....'))
