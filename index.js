@@ -4,6 +4,7 @@ const { connect } = require('./config/detabase')
 
 // Models
 const Restaurant = require('./models/restaurant')
+const User = require('./models/user')
 
 const app = express();
 const port = 5001;
@@ -37,22 +38,17 @@ const userAuthenticate = (req, res, next) => {
 app.use(express.json())
 app.use(userAuthenticate)
 
-// define variables
-// const data = {
-//     restaurants: []
-// }
-
-const users = [
-    {
-        username: 'john',
-        password: 'password123admin',
-        role: 'admin'
-    }, {
-        username: 'anna',
-        password: 'password123member',
-        role: 'member'
-    }
-];
+// const users = [
+//     {
+//         username: 'john',
+//         password: 'password123admin',
+//         role: 'admin'
+//     }, {
+//         username: 'anna',
+//         password: 'password123member',
+//         role: 'member'
+//     }
+// ];
 
 // handel unauthorized user 
 const handleUnAuthorized = (res) =>{
@@ -154,7 +150,18 @@ function generateAccessToken(username){
 }
 
 // get all users
-app.get('/users', (req, res) => res.json(users))
+app.get('/users', async (req, res) => {
+    try {
+        const users = await User.find({})
+        if(!users){
+            return res.status(404).json({message: 'No Users Found'})
+        }
+        return res.status(200).json({users: users})
+        
+    } catch (err) {
+        throw new Error(err);
+    }
+})
 
 // signup method
 app.post('/signup', (req, res) => {
