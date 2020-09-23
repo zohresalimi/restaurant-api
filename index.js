@@ -16,18 +16,21 @@ const userAuthenticate = (req, res, next) => {
         '/login',
         '/signup'
     ]
-    if(req.url === '/' || publicRoutes.some(route => req.url.includes(route))){
-        next()
+    const isPublicRout = publicRoutes.some(route => req.url.includes(route))
+    console.log('isPublicRout: ' + isPublicRout)
+    console.log(req.path === '/')
+    if(req.path === '/' || isPublicRout){
+        return next()
     }
     const authHeader = req.headers.authorization
     if(!authHeader){
-        handleUnAuthorized(res)
+        handleUnAuthorized(res,'Auth token is not supplied')
         return
     }
     const token = authHeader.split(' ')[1];
     jwt.verify(token, accessTokenSecret, (err, user) => {
         if(err){
-            handleUnAuthorized(res)
+            handleUnAuthorized(res,'Token is not valid')
             return
         }
         req.user = user;
@@ -39,8 +42,8 @@ app.use(express.json())
 app.use(userAuthenticate)
 
 // handel unauthorized user 
-const handleUnAuthorized = (res) =>{
-    return res.status(401).json({ status : false, message: "token is expired"});
+const handleUnAuthorized = (res, message) =>{
+    return res.status(401).json({ status : false, message});
 }
 
 const validId = (id,res) => {
@@ -156,32 +159,42 @@ app.get('/users', async (req, res) => {
 
 // signup method
 app.post('/signup', async (req, res) => {
-    const {username, password, role="user"} = req.body;
-    User.create({username, password, role}, (err, user) => {
-        if(err) throw new Error(err);
-        res.status(201).json({user , message: 'user is created'});
+    const user = {
+        username: req.body.username, 
+        password: req.body.password
+    }
+    console.log(user)
+    User.create(user, (err, user) => {
+        console.log(user)
+        if(err){
+            throw new Error(err);  
+        } 
+        return res.status(201).json({user , message: 'user is created'});
     })
 })
 
 // login method
 app.post('/login', async (req, res) => {
     const {username, password} = req.body;
+    console.log(username, password)
     try {
-        const user = await User.find({username, password}).exec();
+        const user = await User.findOne({username}).exec();
+        console.log(user)
         if(!user){
-            return res.status(401).json({message: 'Invalid username or password'});
+            return res.status(400).json({message: "User Not Exist"});
+        }
+        if(user.password !== password){
+            return res.status(400).json({
+                message: "Incorrect Password !"
+              });
         }
         const accessToken = generateAccessToken(username)
         return res.json({accessToken})
         
-    } catch (error) {
-        
+    } catch (err) {
+        throw new Error(err); 
     }
-    // const user = users.find( user => user.username === username && user.password === password);
-    // if(user){
-    // }else{
-    //     res.status(401).json({message: 'Invalid username or password'});
-    // }
+
 })
 
 
