@@ -2,6 +2,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { connect } = require('./config/detabase')
 
+// Models
+const Restaurant = require('./models/restaurant')
+
 const app = express();
 const port = 5001;
 const accessTokenSecret = 'sceatsRestaurantsapiv1';
@@ -21,7 +24,6 @@ const userAuthenticate = (req, res, next) => {
         return
     }
     const token = authHeader.split(' ')[1];
-    console.log(token)
     jwt.verify(token, accessTokenSecret, (err, user) => {
         if(err){
             handleUnAuthorized(res)
@@ -36,9 +38,9 @@ app.use(express.json())
 app.use(userAuthenticate)
 
 // define variables
-const data = {
-    restaurants: []
-}
+// const data = {
+//     restaurants: []
+// }
 
 const users = [
     {
@@ -69,9 +71,16 @@ app.get('/api/v1/restaurants', userAuthenticate, (req, res) => res.json(data))
 // add a new restaurant
 app.post('/api/v1/restaurants', (req, res) =>{
     const { body } = req;
-    body.id = data.restaurants.length + 1;
-    data.restaurants.push(body);
-    res.json(data)
+    // body.id = data.restaurants.length + 1;
+    // data.restaurants.push(body);
+
+    Restaurant.create(body, (err, data) => {
+        if(err) {
+            throw new Error(err);
+        }
+        res.json({ status: true, data: data })
+
+    })
 })
 
 // retrieve a single restaurant

@@ -13,7 +13,12 @@ const connect = () => {
     useUnifiedTopology: true,
   };
   mongoose.connect(mongoConnectionString, opts);
-  console.log({mongoConnectionString});
 };
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log('connected to mongo db: ', dbNames[process.env.NODE_ENV])
+});
 
 module.exports = { connect };

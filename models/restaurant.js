@@ -1,6 +1,6 @@
-const mongosse = require('mongosse');
+const mongoose = require('mongoose');
 
-const RestaurantSchema = new mongosse.schema({
+const RestaurantSchema = new mongoose.Schema({
     "id": Number,
     "img": String,
     "name": String,
@@ -23,4 +23,4 @@ const RestaurantSchema = new mongosse.schema({
     ]
 })
 
-module.exports = mongosse.model('Resturant', RestaurantSchema)
+module.exports = mongoose.model('Resturant', RestaurantSchema)
