@@ -38,18 +38,6 @@ const userAuthenticate = (req, res, next) => {
 app.use(express.json())
 app.use(userAuthenticate)
 
-// const users = [
-//     {
-//         username: 'john',
-//         password: 'password123admin',
-//         role: 'admin'
-//     }, {
-//         username: 'anna',
-//         password: 'password123member',
-//         role: 'member'
-//     }
-// ];
-
 // handel unauthorized user 
 const handleUnAuthorized = (res) =>{
     return res.status(401).json({ status : false, message: "token is expired"});
@@ -167,8 +155,8 @@ app.get('/users', async (req, res) => {
 })
 
 // signup method
-app.post('/signup', (req, res) => {
-    const {username, password, role} = req.body;
+app.post('/signup', async (req, res) => {
+    const {username, password, role="user"} = req.body;
     User.create({username, password, role}, (err, user) => {
         if(err) throw new Error(err);
         res.status(201).json({user , message: 'user is created'});
@@ -176,15 +164,24 @@ app.post('/signup', (req, res) => {
 })
 
 // login method
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const {username, password} = req.body;
-    const user = users.find( user => user.username === username && user.password === password);
-    if(user){
+    try {
+        const user = await User.find({username, password}).exec();
+        if(!user){
+            return res.status(401).json({message: 'Invalid username or password'});
+        }
         const accessToken = generateAccessToken(username)
-        res.json({accessToken})
-    }else{
-        res.status(401).json({message: 'Invalid username or password'});
+        return res.json({accessToken})
+        
+    } catch (error) {
+        
     }
+    // const user = users.find( user => user.username === username && user.password === password);
+    // if(user){
+    // }else{
+    //     res.status(401).json({message: 'Invalid username or password'});
+    // }
 })
 
 
