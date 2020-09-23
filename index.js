@@ -59,6 +59,12 @@ const handleUnAuthorized = (res) =>{
     return res.status(401).json({ status : false, message: "token is expired"});
 }
 
+const validId = (id,res) => {
+
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).json({message: "please provide id in correct format" });
+    }
+}
 
 // get, delete, post, put
 app.get('/', (req, res) => {
@@ -69,7 +75,7 @@ app.get('/', (req, res) => {
 app.get('/api/v1/restaurants', async (req, res) =>{
     try{
         const restaurants = await Restaurant.find({})
-        res.status(200).json({data: restaurants});
+        res.status(200).json({restaurants: restaurants});
     } catch(err){
         throw new Error(err);
     }
@@ -90,9 +96,7 @@ app.post('/api/v1/restaurants', (req, res) =>{
 // retrieve a single restaurant
 app.get('/api/v1/restaurants/:id', async(req, res) => {
     const { id } = req.params;
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({message: "please provide id in correct format" });
-      }
+    validId(id,res)
     try{
         const resturant = await Restaurant.findById(id).exec();
         if(!resturant){
@@ -105,50 +109,40 @@ app.get('/api/v1/restaurants/:id', async(req, res) => {
 })
 
 // remove a restaurant 
-app.delete('/api/v1/restaurants/:id', (req,res) => {
+app.delete('/api/v1/restaurants/:id', async(req,res) => {
     const { id } = req.params;
+    validId(id,res)
     let deleted = false
-    // 1- remove restaurant with filter method
-    data.restaurants = data.restaurants.filter(aRestaurant => {
-        if(aRestaurant.id === +id){
-            deleted = true
-            return false
+    try {
+        const restaurant = await Restaurant.findByIdAndRemove(id)
+        if(!restaurant){
+            return res.status(400).json({status: deleted, message: 'restaurant was not found!'});
         }
-        return true
-    });
-
-    // 2- remove restaurant with splice method
-    // const restaurantIndex = data.restaurants.findIndex(aRestaurant => aRestaurant.id === +id)
-    // if(restaurantIndex != -1) {
-    //     data.restaurants = data.restaurants.splice(restaurantIndex,1)
-    //     deleted = true;
-    // }
-    return res.json({status: deleted, id})
+        deleted = true
+        return res.status(200).json({status: deleted, id})
+        
+    } catch (error) {
+        throw new Error(err);
+    }
 })
 
 // update a restaurant
-app.put('/api/v1/restaurants/:id', (req, res) => {
+app.put('/api/v1/restaurants/:id', async (req, res) => {
     const { id } = req.params;
     const { body } = req;
-    console.log(body)
+    validId(id,res)
     let updated = false;
-
-    data.restaurants = data.restaurants.map(aRestaurant => {
-        if(aRestaurant.id === +id){
-            console.log(body)
-            aRestaurant = {
-                ...aRestaurant,
-                ...body
-            }
-            updated = true;
+    try {
+        const restaurant = await Restaurant.findByIdAndUpdate(id, body)
+        if(!restaurant){
+            return res.status(400).json({status: updated, message: 'Restaurant not found'})
         }
-        console.log(aRestaurant)
-        return aRestaurant
-    })
-
-    return res.json({status: updated, id})
-
-
+        updated = true
+        return res.status(200).json({status: updated, id})
+        
+    } catch (error) {
+        throw new Error(err);
+    }
 })
 
 
