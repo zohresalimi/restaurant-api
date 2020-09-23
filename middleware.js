@@ -1,3 +1,8 @@
+const jwt = require('jsonwebtoken');
+const accessTokenSecret = 'sceatsRestaurantsapiv1';
+
+
+
 // handel unauthorized user 
 const handleUnAuthorized = (res, message) =>{
     return res.status(401).json({ status : false, message});
@@ -5,10 +10,7 @@ const handleUnAuthorized = (res, message) =>{
 
 // authenticat a user
 const userAuthenticate = (req, res, next) => {
-    const publicRoutes = [
-        '/login',
-        '/signup'
-    ]
+    const publicRoutes = []
     const isPublicRout = publicRoutes.some(route => req.url.includes(route))
     console.log('isPublicRout: ' + isPublicRout)
     console.log(req.path === '/')
