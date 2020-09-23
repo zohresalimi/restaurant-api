@@ -71,6 +71,9 @@ app.get('/', (req, res) => {
 app.get('/api/v1/restaurants', async (req, res) =>{
     try{
         const restaurants = await Restaurant.find({})
+        if(!restaurants){
+            return res.status(404).json({message: 'No restaurants round'})
+        }
         res.status(200).json({restaurants: restaurants});
     } catch(err){
         throw new Error(err);
@@ -165,9 +168,11 @@ app.get('/users', async (req, res) => {
 
 // signup method
 app.post('/signup', (req, res) => {
-    const {username, password} = req.body;
-    users.push({username, password, role: 'user'});
-    res.status(201).json({message: 'user is created'});
+    const {username, password, role} = req.body;
+    User.create({username, password, role}, (err, user) => {
+        if(err) throw new Error(err);
+        res.status(201).json({user , message: 'user is created'});
+    })
 })
 
 // login method
