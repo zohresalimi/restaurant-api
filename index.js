@@ -88,13 +88,23 @@ app.post('/api/v1/restaurants', (req, res) =>{
 })
 
 // retrieve a single restaurant
-app.get('/api/v1/restaurants/:id', (req, res) => {
+app.get('/api/v1/restaurants/:id', async(req, res) => {
     const { id } = req.params;
-    const restaurant = data.restaurants.find(aRestaurant => aRestaurant.id === +id)
-    return res.json(restaurant)
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        return res.status(400).json({message: "please provide id in correct format" });
+      }
+    try{
+        const resturant = await Restaurant.findById(id).exec();
+        if(!resturant){
+            return res.status(404).json({message: 'restaurant not found'});
+        }
+        return res.status(200).json({data: resturant});
+    } catch(err){
+        throw new Error(err);
+    }
 })
 
-// remove a restaurant from restaurants
+// remove a restaurant 
 app.delete('/api/v1/restaurants/:id', (req,res) => {
     const { id } = req.params;
     let deleted = false

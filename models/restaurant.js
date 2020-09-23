@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+Schema = mongoose.Schema
 
 const RestaurantSchema = new mongoose.Schema({
-    "id": Number,
+    "_id": Schema.Types.ObjectId,
     "img": String,
     "name": String,
     "description": String,
