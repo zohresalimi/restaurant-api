@@ -66,14 +66,18 @@ app.get('/', (req, res) => {
 })
 
 // get all restaurants
-app.get('/api/v1/restaurants', userAuthenticate, (req, res) => res.json(data))
+app.get('/api/v1/restaurants', async (req, res) =>{
+    try{
+        const restaurants = await Restaurant.find({})
+        res.json({ status: 200, data: restaurants});
+    } catch(err){
+        throw new Error(err);
+    }
+})
 
 // add a new restaurant
 app.post('/api/v1/restaurants', (req, res) =>{
     const { body } = req;
-    // body.id = data.restaurants.length + 1;
-    // data.restaurants.push(body);
-
     Restaurant.create(body, (err, data) => {
         if(err) {
             throw new Error(err);
