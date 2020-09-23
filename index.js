@@ -69,7 +69,7 @@ app.get('/', (req, res) => {
 app.get('/api/v1/restaurants', async (req, res) =>{
     try{
         const restaurants = await Restaurant.find({})
-        res.json({ status: 200, data: restaurants});
+        res.status(200).json({data: restaurants});
     } catch(err){
         throw new Error(err);
     }
@@ -82,7 +82,7 @@ app.post('/api/v1/restaurants', (req, res) =>{
         if(err) {
             throw new Error(err);
         }
-        res.json({ status: true, data: data })
+        res.status(201).json({data: data});
 
     })
 })
