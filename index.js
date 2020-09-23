@@ -1,57 +1,28 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
+
 const { connect } = require('./config/detabase')
 
 // Models
 const Restaurant = require('./models/restaurant')
 const User = require('./models/user')
 
+//middleware
+const { userAuthenticate } = require('./middleware')
+
+// utils
+const { validId, generateAccessToken} = require('./utils')
+
 const app = express();
 const port = 5001;
-const accessTokenSecret = 'sceatsRestaurantsapiv1';
 
-// authenticat a user
-const userAuthenticate = (req, res, next) => {
-    const publicRoutes = [
-        '/login',
-        '/signup'
-    ]
-    const isPublicRout = publicRoutes.some(route => req.url.includes(route))
-    console.log('isPublicRout: ' + isPublicRout)
-    console.log(req.path === '/')
-    if(req.path === '/' || isPublicRout){
-        return next()
-    }
-    const authHeader = req.headers.authorization
-    if(!authHeader){
-        handleUnAuthorized(res,'Auth token is not supplied')
-        return
-    }
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, accessTokenSecret, (err, user) => {
-        if(err){
-            handleUnAuthorized(res,'Token is not valid')
-            return
-        }
-        req.user = user;
-        next()
-    })
-}
+
 
 app.use(express.json())
 app.use(userAuthenticate)
 
-// handel unauthorized user 
-const handleUnAuthorized = (res, message) =>{
-    return res.status(401).json({ status : false, message});
-}
 
-const validId = (id,res) => {
 
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({message: "please provide id in correct format" });
-    }
-}
+
 
 // get, delete, post, put
 app.get('/', (req, res) => {
@@ -62,11 +33,9 @@ app.get('/', (req, res) => {
 app.get('/api/v1/restaurants', async (req, res) =>{
     try{
         const restaurants = await Restaurant.find({})
-        if(!restaurants){
-            return res.status(404).json({message: 'No restaurants round'})
-        }
-        res.status(200).json({restaurants: restaurants});
+        res.status(200).json({restaurants});
     } catch(err){
+        res.status(200).json({ message: 'No restaurants round'})
         throw new Error(err);
     }
 })
@@ -138,17 +107,14 @@ app.put('/api/v1/restaurants/:id', async (req, res) => {
 
 /* ___________ user authentication ___________ */
 
-// generate JWT token
-function generateAccessToken(username){
-    return jwt.sign(username,accessTokenSecret)
-}
+
 
 // get all users
 app.get('/users', async (req, res) => {
     try {
         const users = await User.find({})
         if(!users){
-            return res.status(404).json({message: 'No Users Found'})
+            return res.status(200).json({data: [], message:'no users'})
         }
         return res.status(200).json({users: users})
         
@@ -180,13 +146,12 @@ app.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({username}).exec();
         console.log(user)
-        if(!user){
-            return res.status(400).json({message: "User Not Exist"});
-        }
-        if(user.password !== password){
-            return res.status(400).json({
-                message: "Incorrect Password !"
-              });
+        /**
+         * instead of sending separate error messages for
+         * username and password we send a generic error for sequrity resons
+         */
+        if(!user  || user.password !== password){
+            return res.status(400).json({message: "username or password is incorrect"});
         }
         const accessToken = generateAccessToken(username)
         return res.json({accessToken})
