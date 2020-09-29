@@ -13,7 +13,7 @@ router.get('/users', (req, res) => {
         if (err) {
             throw new Error(err);
         } else {
-            if(!users){
+            if(!users.length){
                 return res.status(200).json({data: [], message:'no users'})
             }
             return res.status(200).json({users: users})

@@ -12,14 +12,17 @@ router.use(userAuthenticate)
 const { validId } = require('../utils')
 
 // get all restaurants
-router.get('/restaurants', async (req, res) =>{
-    try{
-        const restaurants = await Restaurant.find({})
-        res.status(200).json({restaurants});
-    } catch(err){
-        res.status(200).json({ message: 'No restaurants round'})
-        throw new Error(err);
-    }
+router.get('/restaurants', (req, res) =>{
+    Restaurant.find({}, (err, restaurants) => {
+        if(err){
+            throw new Error(err);
+        }
+        if(!restaurants.length){
+            return res.status(200).json({ message: 'No restaurants round'})
+        }
+        return res.status(200).json({restaurants});
+    })
+
 })
 
 // add a new restaurant

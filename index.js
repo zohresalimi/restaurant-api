@@ -5,7 +5,7 @@ const authRoute = require('./routes/authentication')
 const v1Route = require('./routes/v1')
 
 const app = express();
-const port = 3000;
+const port = 6000;
 
 app.use(express.json())
 
