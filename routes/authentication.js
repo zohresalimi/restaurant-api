@@ -9,16 +9,27 @@ const { generateAccessToken} = require('../utils')
 
 // get all users
 router.get('/users', async (req, res) => {
-    try {
-        const users = await User.find({})
-        if(!users){
-            return res.status(200).json({data: [], message:'no users'})
-        }
-        return res.status(200).json({users: users})
+    // try {
+    //     const users = await User.find({})
+    //     if(!users){
+    //         return res.status(200).json({data: [], message:'no users'})
+    //     }
+    //     return res.status(200).json({users: users})
         
-    } catch (err) {
-        throw new Error(err);
-    }
+    // } catch (err) {
+    //     throw new Error(err);
+    // }
+
+    User.find({}, function(err, users) {
+        if (err) {
+            throw new Error(err);
+        } else {
+            if(!users){
+                return res.status(200).json({data: [], message:'no users'})
+            }
+            return res.status(200).json({users: users})
+        }
+      });
 })
 
 // signup method
