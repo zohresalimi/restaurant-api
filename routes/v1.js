@@ -38,55 +38,54 @@ router.post('/restaurants', (req, res) =>{
 })
 
 // retrieve a single restaurant
-router.get('/restaurants/:id', async(req, res) => {
+router.get('/restaurants/:id', (req, res) => {
     const { id } = req.params;
     validId(id,res)
-    try{
-        const resturant = await Restaurant.findById(id).exec();
+    Restaurant.findById(id, (err, resturant) => {
+        if (err){
+            throw new Error(err);
+        }
         if(!resturant){
             return res.status(404).json({message: 'restaurant not found'});
         }
         return res.status(200).json({data: resturant});
-    } catch(err){
-        throw new Error(err);
-    }
+    })
 })
 
 // remove a restaurant 
-router.delete('/restaurants/:id', async(req,res) => {
+router.delete('/restaurants/:id', (req,res) => {
     const { id } = req.params;
     validId(id,res)
     let deleted = false
-    try {
-        const restaurant = await Restaurant.findByIdAndRemove(id)
+    Restaurant.findByIdAndRemove(id, (err, restaurant) => {
+        if(err) {
+            throw new Error(err);
+        }
         if(!restaurant){
             return res.status(400).json({status: deleted, message: 'restaurant was not found!'});
         }
         deleted = true
         return res.status(200).json({status: deleted, id})
-        
-    } catch (error) {
-        throw new Error(err);
-    }
+    })
+
 })
 
 // update a restaurant
-router.put('/restaurants/:id', async (req, res) => {
+router.put('/restaurants/:id', (req, res) => {
     const { id } = req.params;
     const { body } = req;
     validId(id,res)
     let updated = false;
-    try {
-        const restaurant = await Restaurant.findByIdAndUpdate(id, body)
+    Restaurant.findByIdAndUpdate(id, body, (err, restaurant) => {
+        if (err) {
+            throw new Error(err);
+        }
         if(!restaurant){
             return res.status(400).json({status: updated, message: 'Restaurant not found'})
         }
         updated = true
         return res.status(200).json({status: updated, id})
-        
-    } catch (error) {
-        throw new Error(err);
-    }
+    })
 })
 
 module.exports = router
